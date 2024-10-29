@@ -1,4 +1,4 @@
-function state = State(state0, control, vehicle)
+function state = Dynamics3DoF(state0, control, vehicle)
     % state0 - a vector containing [x, y, xdot, ydot, theta, thetadot]
 
     % thrust - the number of newtons of thrust

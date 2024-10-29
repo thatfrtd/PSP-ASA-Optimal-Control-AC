@@ -1,21 +1,8 @@
-function [u_opt, x_opt] = trajOptimizer3(x_initial)
+function [u_opt, x_opt] = TrajOptimizer(x_initial, vehicle)
     import casadi.*
     %input current state, output control vector and potential state
     % Define constants
     g = 9.8; % Gravity in m/s^2
-    m = 100000; % Mass in kg
-    min_thrust = 880 * 1000;  % N
-    max_thrust = 2210 * 1000; % N 
-    
-    length_rod = 60; % Length in meters
-    width = 10; % Width 
-    
-    % Moment of inertia for a uniform density rod
-    I = (1/12) * m * length_rod^2; 
-    
-    % Gimbal angle limits
-    max_gimbal = deg2rad(20);
-    min_gimbal = -max_gimbal;
     
     % Define the optimization problem
     opti = Opti();
@@ -26,7 +13,7 @@ function [u_opt, x_opt] = trajOptimizer3(x_initial)
     
     % Generate the array of state and control vectors
     
-    % States: x, x_dot, y, y_dot, theta, theta_dot
+    % States: x, y, x_dot, y_dot, theta, theta_dot
     x = opti.variable(steps, 6);  % steps x 6 matrix
     % Controls: thrust (percent), thrust_angle (rad)
     u = opti.variable(steps, 2);
@@ -35,7 +22,7 @@ function [u_opt, x_opt] = trajOptimizer3(x_initial)
     % 0, 0, 1000, -80, -pi/2, 0
     
     opti.subject_to(x(1, :) == [x_initial(1), x_initial(2), x_initial(3), x_initial(4), x_initial(5), x_initial(6)]); % Initial state
-    opti.subject_to(x(steps, :) == [0, 0, 0, 0, 0, 0]); % Final state
+    opti.subject_to(x(steps, :) == [0, 0, 0, 0, deg2rad(90), 0]); % Final state
     
     % Cost function to minimize effort and angular velocity
     
@@ -48,32 +35,8 @@ function [u_opt, x_opt] = trajOptimizer3(x_initial)
         x_current = x(i, :)';
         u_current = u(i, :)';
         
-        % Extract state variables
-        pos_x = x_current(1);
-        vel_x = x_current(2);
-        pos_y = x_current(3);
-        vel_y = x_current(4);
-        theta = x_current(5);
-        omega = x_current(6);
-        
-        % Extract control variables
-        thrust_percent = u_current(1);
-        thrust_angle = u_current(2);
-        
-        % forces
-        F_x = max_thrust * thrust_percent * sin(thrust_angle + theta);
-        F_y = max_thrust * thrust_percent * cos(thrust_angle + theta);
-        
-        % torque
-        T = - (length_rod / 2) * max_thrust * thrust_percent * sin(thrust_angle);
-        
-        % accelerations
-        acc_x = F_x / m;
-        acc_y = (F_y / m) - g;
-        alpha = T / I;  %angular
-        
         % Define the state derivatives
-        x_dot = [vel_x; acc_x; vel_y; acc_y; omega; alpha];
+        x_dot = Dynamics3DoF(x_current, u_current .* [vehicle.max_thrust; 1], vehicle)';
         
         % Euler integration for dynamics constraints
         x_next = x_current + x_dot * t_step;
@@ -83,12 +46,12 @@ function [u_opt, x_opt] = trajOptimizer3(x_initial)
     end
     
     % Thrust percentage bounds
-    opti.subject_to(u(:,1) >= 0.4);
+    opti.subject_to(u(:,1) >= vehicle.min_thrust / vehicle.max_thrust);
     opti.subject_to(u(:,1) <= 1);
     
     % Thrust angle bounds
-    opti.subject_to(u(:,2) >= min_gimbal);
-    opti.subject_to(u(:,2) <= max_gimbal);
+    opti.subject_to(u(:,2) >= -vehicle.max_gimbal);
+    opti.subject_to(u(:,2) <= vehicle.max_gimbal);
     
     
     % Solver options
@@ -119,8 +82,8 @@ function [u_opt, x_opt] = trajOptimizer3(x_initial)
     subplot(2,1,1);
     hold on;
     plot(x_opt(:,1), 'LineWidth', 1.5, 'DisplayName', 'x (Position)');
-    plot(x_opt(:,2), 'LineWidth', 1.5, 'DisplayName', 'x\_dot (Velocity)');
-    plot(x_opt(:,3), 'LineWidth', 1.5, 'DisplayName', 'y (Position)');
+    plot(x_opt(:,2), 'LineWidth', 1.5, 'DisplayName', 'y (Position)');
+    plot(x_opt(:,3), 'LineWidth', 1.5, 'DisplayName', 'x\_dot (Velocity)');
     plot(x_opt(:,4), 'LineWidth', 1.5, 'DisplayName', 'y\_dot (Velocity)');
     plot(x_opt(:,5), 'LineWidth', 1.5, 'DisplayName', 'theta (Angle)');
     plot(x_opt(:,6), 'LineWidth', 1.5, 'DisplayName', 'theta\_dot (Angular Velocity)');
