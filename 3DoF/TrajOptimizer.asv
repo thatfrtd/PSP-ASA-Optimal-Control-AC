@@ -1,13 +1,8 @@
 function [u_opt, x_opt] = TrajOptimizer(x_initial, vehicle)
     %input current state and vehicle information, output control vector and potential state
     % TODO
-    % - Add free final time through having time be normalized and adding a
-    % parameter for time dialation (the time scaling factor)
-    %       - Hopefully should greatly increase the robustness of the MPC
     % - Generalize to higher degree of freedom models if possible
-    % - Account for delay from computation time when setting initial
-    % condition
-    % - Add glideslope constraint
+    % - Account for compatdelay when setting initial 
 
 
     % Define the optimization problem
@@ -19,7 +14,7 @@ function [u_opt, x_opt] = TrajOptimizer(x_initial, vehicle)
     max_iter = 100;
 
     % Number of iterations to run (test warm starting)
-    iterations = 4;
+    iterations = 1;
     
     % Generate the array of state and control vectors
     
