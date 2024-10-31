@@ -27,7 +27,7 @@ function state = Dynamics3DoF(state0, control, vehicle)
         cos(control(2))*(sin(state0(5)))) - GRAVITY;
 
     thetadot = state0(6);
-    thetadotdot = vehicle.L*control(1)*sin(control(2))/vehicle.I;
+    thetadotdot = -vehicle.L*control(1)*sin(control(2))/vehicle.I;
 
     state = [xdot ydot xdotdot ydotdot thetadot thetadotdot];
 end
