@@ -11,10 +11,10 @@ function [u_opt, x_opt] = trajOptimizer3(x_initial)
     width = 10; % Width 
     
     % Moment of inertia for a uniform density rod
-    I = (1/12) * m * length_rod^2; 
+    I = (1/12) * m * length_rod^2;
     
     % Gimbal angle limits
-    max_gimbal = deg2rad(20);
+    max_gimbal = deg2rad(10);
     min_gimbal = -max_gimbal;
     
     % Define the optimization problem
@@ -42,38 +42,14 @@ function [u_opt, x_opt] = trajOptimizer3(x_initial)
     cost = sum(u(:,1).^2) + sum(u(:,2).^2) + 2 * sum(x(:,6).^2);
     opti.minimize(cost);
     
+    vehicle = Vehicle(m, length_rod / 2, length_rod, 10, 0.4*max_thrust, max_thrust);
     %constraints
     for i = 1:(steps-1)
         % Current state
         x_current = x(i, :)';
         u_current = u(i, :)';
         
-        % Extract state variables
-        pos_x = x_current(1);
-        vel_x = x_current(2);
-        pos_y = x_current(3);
-        vel_y = x_current(4);
-        theta = x_current(5);
-        omega = x_current(6);
-        
-        % Extract control variables
-        thrust_percent = u_current(1);
-        thrust_angle = u_current(2);
-        
-        % forces
-        F_x = max_thrust * thrust_percent * sin(thrust_angle + theta);
-        F_y = max_thrust * thrust_percent * cos(thrust_angle + theta);
-        
-        % torque
-        T = - (length_rod / 2) * max_thrust * thrust_percent * sin(thrust_angle);
-        
-        % accelerations
-        acc_x = F_x / m;
-        acc_y = (F_y / m) - g;
-        alpha = T / I;  %angular
-        
-        % Define the state derivatives
-        x_dot = [vel_x; acc_x; vel_y; acc_y; omega; alpha];
+        x_dot = Dynamics3DoF_old(x_current, u_current, vehicle);
         
         % Euler integration for dynamics constraints
         x_next = x_current + x_dot * t_step;
@@ -104,6 +80,7 @@ function [u_opt, x_opt] = trajOptimizer3(x_initial)
     catch ME
         disp('An error occurred during optimization:');
         disp(ME.message);
+        %opti.debug.show_infeasibilities()
         return;
     end
     
