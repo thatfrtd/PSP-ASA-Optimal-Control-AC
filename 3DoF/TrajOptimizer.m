@@ -16,7 +16,7 @@ function [u_opt, x_opt] = TrajOptimizer(x_initial, vehicle)
     % Set the number of steps and the timestep (dt)
     steps = 400;
     t_step = 0.04;
-    max_iter = 100;
+    max_iter = 400;
 
     % Number of iterations to run (test warm starting)
     iterations = 4;

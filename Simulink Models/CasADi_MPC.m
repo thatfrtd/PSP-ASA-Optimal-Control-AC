@@ -97,6 +97,9 @@ classdef CasADi_MPC < matlab.System
             % Thrust angle bounds
             obj.opti.subject_to(obj.u(:,2) >= -obj.vehicle.max_gimbal);
             obj.opti.subject_to(obj.u(:,2) <= obj.vehicle.max_gimbal);
+
+            % State constraint
+            obj.opti.subject_to(obj.x(:,2) >= 0);
             
             % Solver options
             p_opts = struct('expand',true,'error_on_fail',false,'verbose',false);
