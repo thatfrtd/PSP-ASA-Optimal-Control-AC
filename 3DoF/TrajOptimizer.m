@@ -1,4 +1,4 @@
-function [u_opt, x_opt] = TrajOptimizer(x_initial, vehicle)
+function [u_opt, x_opt] = TrajOptimizer(x_initial, x_guess, u_guess, vehicle, show_plots)
     %input current state and vehicle information, output control vector and potential state
     % TODO
     % - Add free final time through having time be normalized and adding a
@@ -8,7 +8,13 @@ function [u_opt, x_opt] = TrajOptimizer(x_initial, vehicle)
     % - Account for delay from computation time when setting initial
     % condition
     % - Add glideslope constraint
-
+    arguments
+        x_initial
+        x_guess
+        u_guess
+        vehicle
+        show_plots = false
+    end
 
     % Define the optimization problem
     opti = casadi.Opti();
@@ -19,7 +25,7 @@ function [u_opt, x_opt] = TrajOptimizer(x_initial, vehicle)
     max_iter = 400;
 
     % Number of iterations to run (test warm starting)
-    iterations = 4;
+    iterations = 1;
     
     % Generate the array of state and control vectors
     
@@ -30,8 +36,8 @@ function [u_opt, x_opt] = TrajOptimizer(x_initial, vehicle)
     
     % Initial and final conditions
     % 0, 0, 1000, -80, -pi/2, 0
-    
-    opti.subject_to(x(steps, :) == [0, 0, 0, 0, deg2rad(90), 0]); % Final state
+    x_final = [0, 0, 0, 0, deg2rad(90), 0];
+    opti.subject_to(x(steps, :) == x_final); % Final state
     
     % Cost function to minimize effort and angular velocity
     
@@ -66,9 +72,10 @@ function [u_opt, x_opt] = TrajOptimizer(x_initial, vehicle)
     opti.subject_to(u(:,2) <= vehicle.max_gimbal);
     
     % Solver options
-    p_opts = struct('expand',true,'error_on_fail',false,'verbose',false);
-    s_opts = struct('max_iter',max_iter);
-    opti.solver('ipopt', p_opts, s_opts);
+    %p_opts = struct('expand',true,'error_on_fail',false,'verbose',false);
+    %s_opts = struct('max_iter',max_iter);
+    %opti.solver('ipopt', p_opts, s_opts);
+    opti.solver('ipopt');
 
     jump = 20;
 
@@ -85,9 +92,13 @@ function [u_opt, x_opt] = TrajOptimizer(x_initial, vehicle)
         if i > 1
             opti.set_initial(u, [u_opt((jump + 1):end,:); repmat(u_opt(end,:), jump, 1)]);
             opti.set_initial(x, [x_opt((jump + 1):end,:); repmat(x_opt(end,:), jump, 1)]);
+        elseif ~isempty(x_guess) & ~isempty(u_guess)
+            opti.set_initial(x, x_guess);
+            opti.set_initial(u, u_guess);
         else
-            opti.set_initial(x, 0);
-            opti.set_initial(u, 0);
+            [x_guess, u_guess] = guess_3DoF(x_initial, x_final, steps, t_step, vehicle);
+            opti.set_initial(x, x_guess);
+            opti.set_initial(u, u_guess);
         end
         
         % Solve the optimization problem
@@ -104,46 +115,47 @@ function [u_opt, x_opt] = TrajOptimizer(x_initial, vehicle)
     end
 
     %Plots
-
-    figure('Name', 'Optimization Results', 'NumberTitle', 'off', 'Color', 'w');
-
-    % Plot state variables
-    subplot(2,1,1);
-    hold on;
-    plot(x_opt(:,1), 'LineWidth', 1.5, 'DisplayName', 'x (Position)');
-    plot(x_opt(:,2), 'LineWidth', 1.5, 'DisplayName', 'y (Position)');
-    plot(x_opt(:,3), 'LineWidth', 1.5, 'DisplayName', 'x\_dot (Velocity)');
-    plot(x_opt(:,4), 'LineWidth', 1.5, 'DisplayName', 'y\_dot (Velocity)');
-    plot(x_opt(:,5), 'LineWidth', 1.5, 'DisplayName', 'theta (Angle)');
-    plot(x_opt(:,6), 'LineWidth', 1.5, 'DisplayName', 'theta\_dot (Angular Velocity)');
-    hold off;
-    legend('Location', 'best');
-    xlabel('Time Step');
-    ylabel('State Values');
-    title('State Variables');
-    grid on;
-
-    % control inputs
-    subplot(2,1,2); 
-    hold on;
-    plot(u_opt(:,1), 'LineWidth', 1.5, 'DisplayName', 'Thrust %');
-    plot(u_opt(:,2), 'LineWidth', 1.5, 'DisplayName', 'Thrust Angle (rad)');
-    hold off;
-    legend('Location', 'best');
-    xlabel('Time Step');
-    ylabel('Control Inputs');
-    title('Control Inputs');
-    grid on;
-
-    % times
-
-    final_time_step = t_step;
-    duration = t_step * steps;
-
-    fprintf('Final Time Step: %.4f seconds\n', final_time_step);
-    fprintf('Total Duration: %.4f seconds\n', duration);
-
-    fprintf("Complete state matrix: \n______________________________\n")
-    disp(x_opt)
-    fprintf("Complete control matrix: \n______________________________\n")
+    if show_plots
+        figure('Name', 'Optimization Results', 'NumberTitle', 'off', 'Color', 'w');
+    
+        % Plot state variables
+        subplot(2,1,1);
+        hold on;
+        plot(x_opt(:,1), 'LineWidth', 1.5, 'DisplayName', 'x (Position)');
+        plot(x_opt(:,2), 'LineWidth', 1.5, 'DisplayName', 'y (Position)');
+        plot(x_opt(:,3), 'LineWidth', 1.5, 'DisplayName', 'x\_dot (Velocity)');
+        plot(x_opt(:,4), 'LineWidth', 1.5, 'DisplayName', 'y\_dot (Velocity)');
+        plot(x_opt(:,5), 'LineWidth', 1.5, 'DisplayName', 'theta (Angle)');
+        plot(x_opt(:,6), 'LineWidth', 1.5, 'DisplayName', 'theta\_dot (Angular Velocity)');
+        hold off;
+        legend('Location', 'best');
+        xlabel('Time Step');
+        ylabel('State Values');
+        title('State Variables');
+        grid on;
+    
+        % control inputs
+        subplot(2,1,2); 
+        hold on;
+        plot(u_opt(:,1), 'LineWidth', 1.5, 'DisplayName', 'Thrust %');
+        plot(u_opt(:,2), 'LineWidth', 1.5, 'DisplayName', 'Thrust Angle (rad)');
+        hold off;
+        legend('Location', 'best');
+        xlabel('Time Step');
+        ylabel('Control Inputs');
+        title('Control Inputs');
+        grid on;
+    
+        % times
+    
+        final_time_step = t_step;
+        duration = t_step * steps;
+    
+        fprintf('Final Time Step: %.4f seconds\n', final_time_step);
+        fprintf('Total Duration: %.4f seconds\n', duration);
+    
+        fprintf("Complete state matrix: \n______________________________\n")
+        disp(x_opt)
+        fprintf("Complete control matrix: \n______________________________\n")
+    end
 end
