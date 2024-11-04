@@ -1,4 +1,4 @@
-function [u_opt, x_opt] = TrajOptimizer(x_initial, x_guess, u_guess, vehicle, show_plots)
+function [u_opt, x_opt] = TrajOptimizer_freetf(x_initial, vehicle, x_guess, u_guess, tf_guess, show_plots)
     %input current state and vehicle information, output control vector and potential state
     % TODO
     % - Add free final time through having time be normalized and adding a
@@ -10,18 +10,19 @@ function [u_opt, x_opt] = TrajOptimizer(x_initial, x_guess, u_guess, vehicle, sh
     % - Add glideslope constraint
     arguments
         x_initial
-        x_guess
-        u_guess
         vehicle
-        show_plots = false
+        x_guess = []
+        u_guess = []
+        tf_guess = []
+        show_plots = true
     end
 
     % Define the optimization problem
     opti = casadi.Opti();
     
     % Set the number of steps and the timestep (dt)
-    steps = 400;
-    t_step = 0.04;
+    steps = 100;
+    max_t_step = 0.5;
     max_iter = 400;
 
     % Number of iterations to run (test warm starting)
@@ -41,12 +42,15 @@ function [u_opt, x_opt] = TrajOptimizer(x_initial, x_guess, u_guess, vehicle, sh
     
     % Cost function to minimize effort and angular velocity
     
-    cost = sum(u(:,1).^2) + sum(u(:,2).^2) + 2 * sum(x(:,6).^2) + t_step * steps;
+    tf = opti.variable(1);
+
+    cost = sum(u(:,1)) * tf / steps * 2 + sum(u(:,2).^2) + sum(x(:,6).^2);
     opti.minimize(cost);
-    
+
     %constraints
     for i = 1:(steps-1)
         % Current state
+
         x_current = x(i, :)';
         u_current = u(i, :)';
         
@@ -54,7 +58,7 @@ function [u_opt, x_opt] = TrajOptimizer(x_initial, x_guess, u_guess, vehicle, sh
         x_dot = Dynamics3DoF(x_current, u_current, vehicle);
         
         % Euler integration for dynamics constraints
-        x_next = x_current + x_dot * t_step;
+        x_next = x_current + x_dot * tf / steps;
         
         % Impose the dynamics constraint
         opti.subject_to(x(i+1, :)' == x_next);
@@ -71,6 +75,10 @@ function [u_opt, x_opt] = TrajOptimizer(x_initial, x_guess, u_guess, vehicle, sh
     opti.subject_to(u(:,2) >= -vehicle.max_gimbal);
     opti.subject_to(u(:,2) <= vehicle.max_gimbal);
     
+    % Parameter constraints
+    opti.subject_to(0 < tf)
+    opti.subject_to(tf < max_t_step * steps)
+
     % Solver options
     %p_opts = struct('expand',true,'error_on_fail',false,'verbose',false);
     %s_opts = struct('max_iter',max_iter);
@@ -92,13 +100,16 @@ function [u_opt, x_opt] = TrajOptimizer(x_initial, x_guess, u_guess, vehicle, sh
         if i > 1
             opti.set_initial(u, [u_opt((jump + 1):end,:); repmat(u_opt(end,:), jump, 1)]);
             opti.set_initial(x, [x_opt((jump + 1):end,:); repmat(x_opt(end,:), jump, 1)]);
-        elseif ~isempty(x_guess) & ~isempty(u_guess)
+            opti.set_initial(tf, tf_opt * (1 - jump / steps));
+        elseif ~isempty(x_guess) & ~isempty(u_guess) & ~isempty(tf_guess)
             opti.set_initial(x, x_guess);
             opti.set_initial(u, u_guess);
+            opti.set_initial(tf, tf_guess);
         else
-            [x_guess, u_guess] = guess_3DoF(x_initial, x_final, steps, t_step, vehicle);
+            [x_guess, u_guess, tf_guess] = guess_3DoF_with_tf(x_initial, x_final, steps, vehicle);
             opti.set_initial(x, x_guess);
             opti.set_initial(u, u_guess);
+            opti.set_initial(tf, 20);
         end
         
         % Solve the optimization problem
@@ -106,6 +117,7 @@ function [u_opt, x_opt] = TrajOptimizer(x_initial, x_guess, u_guess, vehicle, sh
 
         u_opt = sol.value(u);
         x_opt = sol.value(x);
+        tf_opt = sol.value(tf);
         cost_opt = sol.value(cost);
 
         if i == 1
@@ -114,6 +126,8 @@ function [u_opt, x_opt] = TrajOptimizer(x_initial, x_guess, u_guess, vehicle, sh
             opti.set_initial(opti.lam_g, lam_g0);
         end
     end
+
+    t_step = tf_opt / steps;
 
     %Plots
     if show_plots
