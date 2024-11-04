@@ -1,9 +1,9 @@
-classdef CasADi_MPC < matlab.System
+classdef CasADi_MPC_freetf < matlab.System
     properties (Nontunable)
         vehicle = Vehicle(100000,30,60,deg2rad(20),800000,2000000, Name = "Default")
-        t_step (1, 1) double = 0.01
-        steps (1, 1) double = 400
-        max_iter (1, 1) double = 100
+        max_t_step (1, 1) double = 0.5
+        steps (1, 1) double = 50
+        max_iter (1, 1) double = 400
         x_initial (6, 1) double
     end
 
@@ -11,9 +11,11 @@ classdef CasADi_MPC < matlab.System
         opti
         x
         u
+        tf
         p
         x_opt
         u_opt
+        tf_opt
     end
     methods
         function obj = CasADi_MPC(varargin)
@@ -72,7 +74,10 @@ classdef CasADi_MPC < matlab.System
             x_final = [0, 0, 0, 0, deg2rad(90), 0];
             obj.opti.subject_to(obj.x(obj.steps, :) == x_final); % Final state
 
-            cost = sum(obj.u(:,1).^2) + sum(obj.u(:,2).^2) + 2 * sum(obj.x(:,6).^2);
+
+            obj.tf = obj.opti.variable(1);
+
+            cost = sum(obj.u(:,1)) * obj.tf / obj.steps + sum(obj.u(:,2).^2) + sum(obj.x(:,6).^2);
             obj.opti.minimize(cost);
 
             %constraints
@@ -85,7 +90,7 @@ classdef CasADi_MPC < matlab.System
                 x_dot = Dynamics3DoF(x_current, u_current, obj.vehicle);
                 
                 % Euler integration for dynamics constraints
-                x_next = x_current + x_dot * obj.t_step;
+                x_next = x_current + x_dot * obj.tf / obj.steps;
                 
                 % Impose the dynamics constraint
                 obj.opti.subject_to(obj.x(i+1, :)' == x_next);
@@ -102,6 +107,10 @@ classdef CasADi_MPC < matlab.System
             % State constraint
             obj.opti.subject_to(obj.x(:,2) >= 0);
             
+            % Parameter constraints
+            obj.opti.subject_to(0.1 < obj.tf)
+            obj.opti.subject_to(obj.tf < obj.max_t_step * obj.steps)
+
             % Solver options
             p_opts = struct('expand',true,'error_on_fail',false,'verbose',false);
             s_opts = struct('max_iter',obj.max_iter);
@@ -113,16 +122,18 @@ classdef CasADi_MPC < matlab.System
             obj.opti.subject_to(obj.x(1, :) == obj.p); % Initial state
 
             % Initial guess 
-            [x_guess, u_guess] = guess_3DoF(obj.x_initial', x_final, obj.steps, obj.t_step, obj.vehicle);
+            [x_guess, u_guess, tf_guess] = guess_3DoF_with_tf(obj.x_initial', x_final, obj.steps, obj.vehicle);
 
             obj.opti.set_initial(obj.x, x_guess);
             obj.opti.set_initial(obj.u, u_guess);
+            obj.opti.set_initial(obj.tf, tf_guess);
 
             % Solve the optimization problem
             sol = obj.opti.solve();
     
             obj.u_opt = sol.value(obj.u);
             obj.x_opt = sol.value(obj.x);
+            obj.tf_opt = sol.value(obj.tf);
 
             % Initializing Dual Variables
             lam_g0 = sol.value(obj.opti.lam_g);
@@ -135,15 +146,18 @@ classdef CasADi_MPC < matlab.System
             % Initial guess 
             obj.opti.set_initial(obj.u, [obj.u_opt(2:end,:); obj.u_opt(end,:)]);
             obj.opti.set_initial(obj.x, [x_current'; obj.x_opt(3:end,:); obj.x_opt(end,:)]);
+            obj.opti.set_initial(obj.tf, obj.tf_opt * (1 - 1 / obj.steps))
 
             % Solve the optimization problem
             sol = obj.opti.solve();
     
-            u_opt = sol.value(obj.u);
-            x_opt = sol.value(obj.x);
+            obj.u_opt = sol.value(obj.u);
+            obj.x_opt = sol.value(obj.x);
+            obj.tf_opt = sol.value(obj.tf);
 
-            obj.u_opt = u_opt;
-            obj.x_opt = x_opt;
+            x_opt = obj.x_opt;
+            u_opt = obj.u_opt;
+            tf_opt = obj.tf_opt;
         end
 
     end
