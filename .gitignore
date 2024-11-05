@@ -16,3 +16,7 @@ Simulink Models/test_save_vector.slxc
 /Simulink Models/slprj
 /slprj
 *.slxc
+*.slxc
+*.mexw64
+/slprj
+*.asv
