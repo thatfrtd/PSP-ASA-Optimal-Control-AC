@@ -77,7 +77,7 @@ classdef CasADi_MPC_freetf < matlab.System
 
             obj.tf = obj.opti.variable(1);
 
-            cost = sum(obj.u(:,1)) * obj.tf / obj.steps + sum(obj.u(:,2).^2) + sum(obj.x(:,6).^2);
+            cost = sum(obj.u(:,1)) * obj.tf / obj.steps*0.5 + sum(obj.u(:,1))^2 + sum(obj.u(:,2).^2) + sum(obj.x(:,6).^2);
             obj.opti.minimize(cost);
 
             %constraints
