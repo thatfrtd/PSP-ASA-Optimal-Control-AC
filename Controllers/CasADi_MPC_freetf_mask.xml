@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Mask SelfModifiable="on">
+  <Type>CasADi_MPC_freetf</Type>
+  <SourceCheckSum>D43FB1845075DA635687846C5F9F53C1</SourceCheckSum>
+  <Display IconOpaque="transparent" RunInitForIconRedraw="off">image(&apos;CasADi.png&apos;);
+disp(&apos;CasADi_MPC_freetf&apos;);
+port_label(&apos;input&apos;,1,&apos;x_current&apos;);
+port_label(&apos;output&apos;,1,&apos;x_opt&apos;);
+port_label(&apos;output&apos;,2,&apos;u_opt&apos;);
+</Display>
+  <Description>CasADi_MPC_freetf</Description>
+  <Initialization>matlab.system.MLSysBlockIconAndPortLabelsInfo.updateMLSysBlockIconAndPortLabels(gcbh)</Initialization>
+  <MaskParameter Name="vehicle" Type="edit" Tunable="off">
+    <Prompt>vehicle:</Prompt>
+    <Value>vehicle</Value>
+  </MaskParameter>
+  <MaskParameter Name="t_step_max" Type="edit" Tunable="off">
+    <Prompt>t_step_max:</Prompt>
+    <Value>0.5</Value>
+  </MaskParameter>
+  <MaskParameter Name="steps" Type="edit" Tunable="off">
+    <Prompt>steps:</Prompt>
+    <Value>400</Value>
+  </MaskParameter>
+  <MaskParameter Name="max_iter" Type="edit" Tunable="off">
+    <Prompt>max_iter:</Prompt>
+    <Value>100</Value>
+  </MaskParameter>
+  <MaskParameter Name="x_initial" Type="edit" Tunable="off">
+    <Prompt>x_initial:</Prompt>
+    <Value>x0</Value>
+  </MaskParameter>
+  <MaskParameter Name="SimulateUsing" Type="popup" Evaluate="off" Tunable="off">
+    <Prompt>SystemBlock:MATLABSystem:SimulateUsing</Prompt>
+    <Value>Interpreted execution</Value>
+    <TypeOptions>
+      <Option>SystemBlock:MATLABSystem:SimulateUsingCodeGeneration</Option>
+      <Option>SystemBlock:MATLABSystem:SimulateUsingInterpretedExecution</Option>
+    </TypeOptions>
+  </MaskParameter>
+  <DialogControl Type="Group" Name="DescGroupVar">
+    <Prompt>CasADi_MPC_freetf</Prompt>
+    <DialogControl Type="Hyperlink" Name="SourceCodeLink">
+      <Prompt>Source code</Prompt>
+      <Callback>edit(&apos;CasADi_MPC_freetf&apos;);</Callback>
+    </DialogControl>
+  </DialogControl>
+  <DialogControl Type="Group" Name="SectionGroup0_Section1">
+    <Prompt>Simulink:studio:ToolBarParametersMenu</Prompt>
+    <ControlOptions AlignPrompts="on"/>
+    <DialogControl Type="Edit" Name="vehicle">
+      <Prompt>vehicle:</Prompt>
+      <ControlOptions PromptLocation="left"/>
+    </DialogControl>
+    <DialogControl Type="Edit" Name="t_step_max">
+      <Prompt>t_step_max:</Prompt>
+      <ControlOptions PromptLocation="left"/>
+    </DialogControl>
+    <DialogControl Type="Edit" Name="steps">
+      <Prompt>steps:</Prompt>
+      <ControlOptions PromptLocation="left"/>
+    </DialogControl>
+    <DialogControl Type="Edit" Name="max_iter">
+      <Prompt>max_iter:</Prompt>
+      <ControlOptions PromptLocation="left"/>
+    </DialogControl>
+    <DialogControl Type="Edit" Name="x_initial">
+      <Prompt>x_initial:</Prompt>
+      <ControlOptions PromptLocation="left"/>
+    </DialogControl>
+  </DialogControl>
+  <DialogControl Type="Panel" Name="SectionGroup0_Section2">
+    <ControlOptions AlignPrompts="on"/>
+    <DialogControl Type="Popup" Name="SimulateUsing">
+      <Prompt>Simulate using:</Prompt>
+      <Tooltip>SystemBlock:MATLABSystem:SimulateUsingDescription</Tooltip>
+      <ControlOptions PromptLocation="left"/>
+    </DialogControl>
+  </DialogControl>
+</Mask>

@@ -1,4 +1,4 @@
-function state = Dynamics3DoF(state0, control, vehicle)
+function x_dot = Dynamics3DoF(x_current, u_current, vehicle)
     % state0 - a vector containing [x, y, xdot, ydot, theta, thetadot]
 
     % thrust - the number of newtons of thrust
@@ -10,24 +10,41 @@ function state = Dynamics3DoF(state0, control, vehicle)
     %   radians
     
     arguments
-        state0
-        control
+        x_current
+        u_current
         vehicle {mustBeA(vehicle, "Vehicle")}
     end
 
-    GRAVITY = 9.81;
-    accel = control(1)/vehicle.m;
+    max_thrust = vehicle.max_thrust;
+    L = vehicle.L;
+    I = vehicle.I;
+    m = vehicle.m;
 
-    xdot = state0(3);
-    ydot = state0(4);
-
-    xdotdot = accel*(cos(state0(5))*cos(control(2)) - ...
-        sin(control(2))*sin(state0(5)));
-    ydotdot = accel*(cos(state0(5))*sin(control(2)) + ...
-        cos(control(2))*(sin(state0(5)))) - GRAVITY;
-
-    thetadot = state0(6);
-    thetadotdot = vehicle.L*control(1)*sin(control(2))/vehicle.I;
-
-    state = [xdot ydot xdotdot ydotdot thetadot thetadotdot];
+    g = 9.81;
+    % Extract state variables
+    pos_x = x_current(1);
+    pos_y = x_current(2);
+    vel_x = x_current(3);
+    vel_y = x_current(4);
+    theta = x_current(5);
+    omega = x_current(6);
+    
+    % Extract control variables
+    thrust_percent = u_current(1);
+    thrust_angle = u_current(2);
+    
+    % forces
+    F_x = max_thrust * thrust_percent * cos(thrust_angle + theta);
+    F_y = max_thrust * thrust_percent * sin(thrust_angle + theta);
+    
+    % torque
+    T = - L * max_thrust * thrust_percent * sin(thrust_angle);
+    
+    % accelerations
+    acc_x = F_x / m;
+    acc_y = (F_y / m) - g;
+    alpha = T / I;  %angular
+    
+    % Define the state  derivatives
+    x_dot = [vel_x; vel_y; acc_x; acc_y; omega; alpha];
 end
