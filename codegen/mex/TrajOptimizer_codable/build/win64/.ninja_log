@@ -1,0 +1,12 @@
+# ninja log v5
+13	423	7522678020178964	build/win64/TrajOptimizer_codable_data.obj	55963fd571d33c49
+52	435	7522678020358961	build/win64/TrajOptimizer_codable.obj	2b884f46f20bb74b
+57	443	7522678020348958	build/win64/TrajOptimizer_codable_terminate.obj	eed15624b8d167f8
+49	446	7522678020368968	build/win64/c_mexapi_version.obj	f050ab0a070898c2
+61	448	7522678020378964	build/win64/_coder_TrajOptimizer_codable_info.obj	bfe004c5e49e7b17
+27	451	7522678020408970	build/win64/TrajOptimizer_codable_initialize.obj	78a25eb83d6be774
+19	454	7522678020438968	build/win64/rt_nonfinite.obj	6f4da70af4312c96
+33	455	7522678020568950	build/win64/_coder_TrajOptimizer_codable_mex.obj	a8620d129d2b9ce0
+42	479	7522678020818956	build/win64/_coder_TrajOptimizer_codable_api.obj	b933a734cd4c139f
+2	22713	7522678240814365	build/win64/Traj3DoF.obj	1247070cbecb2e6e
+22716	22827	7522678244250553	TrajOptimizer_codable_mex.mexw64	8e35c6a27ccaced5
