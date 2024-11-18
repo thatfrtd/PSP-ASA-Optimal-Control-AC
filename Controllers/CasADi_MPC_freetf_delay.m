@@ -1,4 +1,4 @@
-classdef CasADi_MPC_freetf < matlab.System
+classdef CasADi_MPC_freetf_delay < matlab.System
     properties (Nontunable)
         vehicle = Vehicle(100000,30,60,deg2rad(20),800000,2000000, Name = "Default")
         max_t_step (1, 1) double = 0.5
@@ -6,6 +6,7 @@ classdef CasADi_MPC_freetf < matlab.System
         max_iter (1, 1) double = 400
         x_initial (6, 1) double
         x_final (6, 1) double = [0, 0, 0, 0, pi/2, 0]
+        delay_time (1, 1) double = 0.3
     end
 
     properties (Access = private)
@@ -31,19 +32,23 @@ classdef CasADi_MPC_freetf < matlab.System
             num = 2;
         end
         function num = getNumOutputsImpl(~)
-            num = 2;
+            num = 4;
         end
-        function [dt1, dt2] = getOutputDataTypeImpl(~)
+        function [dt1, dt2, dt3, dt4] = getOutputDataTypeImpl(~)
         	dt1 = 'double';
             dt2 = 'double';
+            dt3 = 'double';
+            dt4 = 'double';
         end
         function [dt1, dt2] = getInputDataTypeImpl(~)
         	dt1 = 'double';
             dt2 = 'double';
         end
-        function [sz1, sz2] = getOutputSizeImpl(obj)
+        function [sz1, sz2, sz3, sz4] = getOutputSizeImpl(obj)
         	sz1 = [obj.steps,6];
             sz2 = [obj.steps,2];
+            sz3 = [1, obj.steps];
+            sz4 = [6, 1];
         end
         function [sz1, sz2] = getInputSizeImpl(~)
         	sz1 = [6, 1];
@@ -53,17 +58,21 @@ classdef CasADi_MPC_freetf < matlab.System
         	cp1 = false;
             cp2 = false;
         end
-        function [cp1, cp2] = isOutputComplexImpl(~)
+        function [cp1, cp2, cp3, cp4] = isOutputComplexImpl(~)
         	cp1 = false;
             cp2 = false;
+            cp3 = false;
+            cp4 = false;
         end
         function [fz1, fz2] = isInputFixedSizeImpl(~)
         	fz1 = true;
             fz2 = true;
         end
-        function [fz1, fz2] = isOutputFixedSizeImpl(~)
+        function [fz1, fz2, fz3, fz4] = isOutputFixedSizeImpl(~)
         	fz1 = true;
             fz2 = true;
+            fz3 = true;
+            fz4 = true;
         end
         function setupImpl(obj,~)
             % Define the optimization problem
@@ -84,8 +93,9 @@ classdef CasADi_MPC_freetf < matlab.System
 
             obj.tf = obj.opti.variable(1);
 
-            cost = sum(obj.u(:,1)) * obj.tf / obj.steps*0.5 + sum(obj.u(:,1).^2)*0.1 + sum(obj.u(:,2).^2) + 2 * sum(obj.x(:,6).^2);
-            %cost = 0*(sum(obj.u(:,1)) * obj.tf / obj.steps*0.2 + sum(obj.u(:,1))^2 * 0.5 + sum(obj.u(:,2).^2) + sum(obj.x(:,6).^2) + sum((obj.x(:, 1) - obj.xf(:, 1)).^2)) + sum((obj.x(:, 2) - obj.xf(:, 2)).^2) + 0*sum((obj.x(:, 4) - obj.xf(:, 4)).^2);
+            cost = sum(obj.u(:,1)) * obj.tf / obj.steps*0.2 + sum(obj.u(:,1).^2) + sum(obj.u(:,2).^2) + 2 * sum(obj.x(:,6).^2);
+            %cost = sum(obj.u(:,1)) * obj.tf / obj.steps * 0.2 + sum(obj.u(:,1).^2) + sum(obj.u(:,2).^2) + sum(obj.x(:,6).^2) + log(sum((obj.x(:, 1) - obj.xf(:, 1)).^2) + sum((obj.x(:, 2) - obj.xf(:, 2)).^2));
+            %cost = sum(obj.u(:,1)) * obj.tf / obj.steps*0.2 + sum(obj.u(:,1))^2 * 0 + sum(obj.u(:,2).^2)*0.1 + 0*sum(obj.x(:,6).^2);
             obj.opti.minimize(cost);
 
             %constraints
@@ -124,9 +134,16 @@ classdef CasADi_MPC_freetf < matlab.System
             s_opts = struct('max_iter',obj.max_iter);
             obj.opti.solver('ipopt', p_opts, s_opts);
 
+            % Initial tf guess 
+            [~, ~, tf_guess_initial] = guess_3DoF_with_tf(obj.x_initial', obj.x_final', obj.steps, obj.vehicle);
+            obj.tf_opt = tf_guess_initial;
             % Setup parametrized initial condition
+            obj.u_opt = zeros([obj.steps, 2]);
+            % Propagate the initial state forward by the delay time
+            x_pred = obj.propagateState(obj.x_initial);
+
             obj.p = obj.opti.parameter(1, 6);
-            obj.opti.set_value(obj.p, [obj.x_initial(1), obj.x_initial(2), obj.x_initial(3), obj.x_initial(4), obj.x_initial(5), obj.x_initial(6)]);
+            obj.opti.set_value(obj.p, x_pred');
             obj.opti.subject_to(obj.x(1, :) == obj.p); % Initial state
 
             % Initial guess 
@@ -148,14 +165,23 @@ classdef CasADi_MPC_freetf < matlab.System
             obj.opti.set_initial(obj.opti.lam_g, lam_g0);
         end
 
-        function [x_opt, u_opt] = stepImpl(obj, x_current, x_final)
+        function [x_opt, u_opt, t_opt, x_pred] = stepImpl(obj, x_current, x_final)
+            % Propagate the current state forward by the delay time
+            [x_pred, steps_delay] = obj.propagateState(x_current);
+
             obj.opti.set_value(obj.xf, x_final);
             obj.opti.set_value(obj.p, x_current'); % Should make it predict into the future to account for delay
         
             % Initial guess 
-            obj.opti.set_initial(obj.u, [obj.u_opt(2:end,:); obj.u_opt(end,:)]);
-            obj.opti.set_initial(obj.x, [x_current'; obj.x_opt(3:end,:); obj.x_opt(end,:)]);
-            obj.opti.set_initial(obj.tf, obj.tf_opt * (1 - 1 / obj.steps))
+            % Update the initial guess for control inputs
+            % Shift the previous control inputs forward and append the last input
+            obj.opti.set_initial(obj.u, [obj.u_opt((steps_delay + 1):end, :); repmat(obj.u_opt(end, :), steps_delay, 1)]);
+            
+            % Update the initial guess for states:
+            % Shift the previous states forward and append the last state
+            obj.opti.set_initial(obj.x, [x_pred'; obj.x_opt((steps_delay + 2):end, :); repmat(obj.x_opt(end, :), steps_delay, 1)]);
+    
+            obj.opti.set_initial(obj.tf, obj.tf_opt * (1 - steps_delay / obj.steps))
 
             % Solve the optimization problem
             sol = obj.opti.solve();
@@ -167,7 +193,29 @@ classdef CasADi_MPC_freetf < matlab.System
             x_opt = obj.x_opt;
             u_opt = obj.u_opt;
             tf_opt = obj.tf_opt;
+            t_opt = linspace(0, tf_opt, obj.steps);
         end
+    end
 
+    methods (Access = private)
+        function [x_pred, steps_delay] = propagateState(obj, x_current)
+
+            % Calculate the number of steps corresponding to the delay time
+            steps_delay = round(obj.delay_time / (obj.tf_opt / obj.steps));
+            x_pred = x_current;
+
+            for i = 1:steps_delay
+                if i <= size(obj.u_opt, 1)
+                    u_current = obj.u_opt(i, :)';
+                else
+                    u_current = obj.u_opt(end, :)';
+                end
+
+                % Calculate state derivatives
+                x_dot = Dynamics3DoF(x_pred, u_current, obj.vehicle);
+
+                x_pred = x_pred + x_dot * (obj.tf_opt / obj.steps);
+            end
+        end
     end
 end
