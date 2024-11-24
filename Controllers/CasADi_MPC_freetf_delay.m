@@ -170,7 +170,7 @@ classdef CasADi_MPC_freetf_delay < matlab.System
             [x_pred, steps_delay] = obj.propagateState(x_current);
 
             obj.opti.set_value(obj.xf, x_final);
-            obj.opti.set_value(obj.p, x_current'); % Should make it predict into the future to account for delay
+            obj.opti.set_value(obj.p, x_current');
         
             % Initial guess 
             % Update the initial guess for control inputs

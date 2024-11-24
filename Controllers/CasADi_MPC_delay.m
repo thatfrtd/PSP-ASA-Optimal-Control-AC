@@ -5,6 +5,7 @@ classdef CasADi_MPC_delay < matlab.System
         steps (1, 1) double = 50
         max_iter (1, 1) double = 400
         x_initial (6, 1) double
+        x_final (6, 1) double = [0, 0, 0, 0, pi/2, 0]
         delay_time (1, 1) double = 0.3
     end
 
@@ -12,6 +13,7 @@ classdef CasADi_MPC_delay < matlab.System
         opti
         x
         u
+        xf
         p
         x_opt
         u_opt
@@ -25,7 +27,7 @@ classdef CasADi_MPC_delay < matlab.System
 
     methods (Access = protected)
         function num = getNumInputsImpl(~)
-            num = 1;
+            num = 2;
         end
         function num = getNumOutputsImpl(~)
             num = 4;
@@ -36,8 +38,9 @@ classdef CasADi_MPC_delay < matlab.System
             dt3 = 'double';
             dt4 = 'double';
         end
-        function dt1 = getInputDataTypeImpl(~)
+        function [dt1, dt2] = getInputDataTypeImpl(~)
         	dt1 = 'double';
+            dt2 = 'double';
         end
         function [sz1, sz2, sz3, sz4] = getOutputSizeImpl(obj)
         	sz1 = [obj.steps,6];
@@ -45,11 +48,13 @@ classdef CasADi_MPC_delay < matlab.System
             sz3 = [1, obj.steps];
             sz4 = [6, 1];
         end
-        function sz1 = getInputSizeImpl(~)
-        	sz1 = [6,1];
+        function [sz1, sz2] = getInputSizeImpl(~)
+        	sz1 = [6, 1];
+            sz2 = [6, 1];
         end
-        function cp1 = isInputComplexImpl(~)
+        function [cp1, cp2] = isInputComplexImpl(~)
         	cp1 = false;
+            cp2 = false;
         end
         function [cp1, cp2, cp3, cp4] = isOutputComplexImpl(~)
         	cp1 = false;
@@ -57,8 +62,9 @@ classdef CasADi_MPC_delay < matlab.System
             cp3 = false;
             cp4 = false;
         end
-        function fz1 = isInputFixedSizeImpl(~)
+        function [fz1, fz2] = isInputFixedSizeImpl(~)
         	fz1 = true;
+            fz2 = true;
         end
         function [fz1, fz2, fz3, fz4] = isOutputFixedSizeImpl(~)
         	fz1 = true;
@@ -78,8 +84,9 @@ classdef CasADi_MPC_delay < matlab.System
             % Controls: thrust (percent), thrust_angle (rad)
             obj.u = obj.opti.variable(obj.steps, 2);
 
-            x_final = [0, 0, 0, 0, deg2rad(90), 0];
-            obj.opti.subject_to(obj.x(obj.steps, :) == x_final); % Final state
+            obj.xf = obj.opti.parameter(1, 6);
+            obj.opti.set_value(obj.xf, obj.x_final);
+            obj.opti.subject_to(obj.x(obj.steps, :) == obj.xf); % Final state
 
             cost = sum(obj.u(:,1).^2) + sum(obj.u(:,2).^2) + 2 * sum(obj.x(:,6).^2);
             obj.opti.minimize(cost);
@@ -126,7 +133,7 @@ classdef CasADi_MPC_delay < matlab.System
             obj.opti.subject_to(obj.x(1, :) == obj.p); % Initial state
             
             % Initial guess 
-            [x_guess, u_guess] = guess_3DoF(obj.x_initial', x_final, obj.steps, obj.t_step, obj.vehicle);
+            [x_guess, u_guess] = guess_3DoF(obj.x_initial', obj.x_final', obj.steps, obj.t_step, obj.vehicle);
 
             obj.opti.set_initial(obj.x, x_guess);
             obj.opti.set_initial(obj.u, u_guess);
@@ -142,10 +149,11 @@ classdef CasADi_MPC_delay < matlab.System
             obj.opti.set_initial(obj.opti.lam_g, lam_g0);
         end
 
-        function [x_opt, u_opt, t_opt, x_pred] = stepImpl(obj,x_current)
+        function [x_opt, u_opt, t_opt, x_pred] = stepImpl(obj,x_current, x_final)
             % Propagate the current state forward by the delay time
             [x_pred, steps_delay] = obj.propagateState(x_current);
             
+            obj.opti.set_value(obj.xf, x_final);
             % Update the initial condition parameter with the predicted state
             obj.opti.set_value(obj.p, x_pred');
 
