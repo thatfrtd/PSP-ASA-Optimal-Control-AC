@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Mask SelfModifiable="on">
   <Type>CasADi_MPC_freetf</Type>
-  <SourceCheckSum>BD6720005BB73478D1BB3ED6B97BDC5D</SourceCheckSum>
+  <SourceCheckSum>CF6DABBC925780016672112C604AB548</SourceCheckSum>
   <Display IconOpaque="transparent" RunInitForIconRedraw="off">image(&apos;CasADi.png&apos;);
 disp(&apos;CasADi_MPC_freetf&apos;);
 port_label(&apos;input&apos;,1,&apos;x_current&apos;);
 port_label(&apos;input&apos;,2,&apos;x_final&apos;);
 port_label(&apos;output&apos;,1,&apos;x_opt&apos;);
 port_label(&apos;output&apos;,2,&apos;u_opt&apos;);
+port_label(&apos;output&apos;,3,&apos;t_opt&apos;);
 </Display>
   <Description>CasADi_MPC_freetf</Description>
   <Initialization>matlab.system.MLSysBlockIconAndPortLabelsInfo.updateMLSysBlockIconAndPortLabels(gcbh)</Initialization>

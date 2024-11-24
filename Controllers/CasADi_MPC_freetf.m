@@ -31,19 +31,21 @@ classdef CasADi_MPC_freetf < matlab.System
             num = 2;
         end
         function num = getNumOutputsImpl(~)
-            num = 2;
+            num = 3;
         end
-        function [dt1, dt2] = getOutputDataTypeImpl(~)
+        function [dt1, dt2, dt3] = getOutputDataTypeImpl(~)
         	dt1 = 'double';
             dt2 = 'double';
+            dt3 = 'double';
         end
         function [dt1, dt2] = getInputDataTypeImpl(~)
         	dt1 = 'double';
             dt2 = 'double';
         end
-        function [sz1, sz2] = getOutputSizeImpl(obj)
+        function [sz1, sz2, sz3] = getOutputSizeImpl(obj)
         	sz1 = [obj.steps,6];
             sz2 = [obj.steps,2];
+            sz3 = [1, obj.steps];
         end
         function [sz1, sz2] = getInputSizeImpl(~)
         	sz1 = [6, 1];
@@ -53,17 +55,19 @@ classdef CasADi_MPC_freetf < matlab.System
         	cp1 = false;
             cp2 = false;
         end
-        function [cp1, cp2] = isOutputComplexImpl(~)
+        function [cp1, cp2, cp3] = isOutputComplexImpl(~)
         	cp1 = false;
             cp2 = false;
+            cp3 = false;
         end
         function [fz1, fz2] = isInputFixedSizeImpl(~)
         	fz1 = true;
             fz2 = true;
         end
-        function [fz1, fz2] = isOutputFixedSizeImpl(~)
+        function [fz1, fz2, fz3] = isOutputFixedSizeImpl(~)
         	fz1 = true;
             fz2 = true;
+            fz3 = true;
         end
         function setupImpl(obj,~)
             % Define the optimization problem
@@ -148,7 +152,7 @@ classdef CasADi_MPC_freetf < matlab.System
             obj.opti.set_initial(obj.opti.lam_g, lam_g0);
         end
 
-        function [x_opt, u_opt] = stepImpl(obj, x_current, x_final)
+        function [x_opt, u_opt, t_opt] = stepImpl(obj, x_current, x_final)
             obj.opti.set_value(obj.xf, x_final);
             obj.opti.set_value(obj.p, x_current'); % Should make it predict into the future to account for delay
         
@@ -167,6 +171,7 @@ classdef CasADi_MPC_freetf < matlab.System
             x_opt = obj.x_opt;
             u_opt = obj.u_opt;
             tf_opt = obj.tf_opt;
+            t_opt = linspace(0, tf_opt, obj.steps);
         end
 
     end
