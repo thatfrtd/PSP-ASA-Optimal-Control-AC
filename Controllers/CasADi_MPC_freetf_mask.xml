@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Mask SelfModifiable="on">
   <Type>CasADi_MPC_freetf</Type>
-  <SourceCheckSum>D43FB1845075DA635687846C5F9F53C1</SourceCheckSum>
+  <SourceCheckSum>BD6720005BB73478D1BB3ED6B97BDC5D</SourceCheckSum>
   <Display IconOpaque="transparent" RunInitForIconRedraw="off">image(&apos;CasADi.png&apos;);
 disp(&apos;CasADi_MPC_freetf&apos;);
 port_label(&apos;input&apos;,1,&apos;x_current&apos;);
+port_label(&apos;input&apos;,2,&apos;x_final&apos;);
 port_label(&apos;output&apos;,1,&apos;x_opt&apos;);
 port_label(&apos;output&apos;,2,&apos;u_opt&apos;);
 </Display>
@@ -14,17 +15,13 @@ port_label(&apos;output&apos;,2,&apos;u_opt&apos;);
     <Prompt>vehicle:</Prompt>
     <Value>vehicle</Value>
   </MaskParameter>
-  <MaskParameter Name="t_step_max" Type="edit" Tunable="off">
-    <Prompt>t_step_max:</Prompt>
-    <Value>0.5</Value>
-  </MaskParameter>
   <MaskParameter Name="steps" Type="edit" Tunable="off">
     <Prompt>steps:</Prompt>
-    <Value>400</Value>
+    <Value>steps</Value>
   </MaskParameter>
   <MaskParameter Name="max_iter" Type="edit" Tunable="off">
     <Prompt>max_iter:</Prompt>
-    <Value>100</Value>
+    <Value>400</Value>
   </MaskParameter>
   <MaskParameter Name="x_initial" Type="edit" Tunable="off">
     <Prompt>x_initial:</Prompt>
@@ -38,6 +35,14 @@ port_label(&apos;output&apos;,2,&apos;u_opt&apos;);
       <Option>SystemBlock:MATLABSystem:SimulateUsingInterpretedExecution</Option>
     </TypeOptions>
   </MaskParameter>
+  <MaskParameter Name="max_t_step" Type="edit" Tunable="off">
+    <Prompt>max_t_step:</Prompt>
+    <Value>0.5</Value>
+  </MaskParameter>
+  <MaskParameter Name="x_final" Type="edit" Tunable="off">
+    <Prompt>x_final:</Prompt>
+    <Value>xf</Value>
+  </MaskParameter>
   <DialogControl Type="Group" Name="DescGroupVar">
     <Prompt>CasADi_MPC_freetf</Prompt>
     <DialogControl Type="Hyperlink" Name="SourceCodeLink">
@@ -50,10 +55,6 @@ port_label(&apos;output&apos;,2,&apos;u_opt&apos;);
     <ControlOptions AlignPrompts="on"/>
     <DialogControl Type="Edit" Name="vehicle">
       <Prompt>vehicle:</Prompt>
-      <ControlOptions PromptLocation="left"/>
-    </DialogControl>
-    <DialogControl Type="Edit" Name="t_step_max">
-      <Prompt>t_step_max:</Prompt>
       <ControlOptions PromptLocation="left"/>
     </DialogControl>
     <DialogControl Type="Edit" Name="steps">
@@ -76,5 +77,11 @@ port_label(&apos;output&apos;,2,&apos;u_opt&apos;);
       <Tooltip>SystemBlock:MATLABSystem:SimulateUsingDescription</Tooltip>
       <ControlOptions PromptLocation="left"/>
     </DialogControl>
+  </DialogControl>
+  <DialogControl Type="Edit" Name="max_t_step">
+    <Prompt>max_t_step:</Prompt>
+  </DialogControl>
+  <DialogControl Type="Edit" Name="x_final">
+    <Prompt>x_final:</Prompt>
   </DialogControl>
 </Mask>

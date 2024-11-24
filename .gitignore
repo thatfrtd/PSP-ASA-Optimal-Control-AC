@@ -20,3 +20,4 @@ Simulink Models/test_save_vector.slxc
 *.mexw64
 /slprj
 *.asv
+*.original
