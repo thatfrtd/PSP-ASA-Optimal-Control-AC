@@ -45,3 +45,5 @@ matlabFunctionBlock('EoM_3DoF/SymDynamics3DoF',xdot,'Vars',[x; u; mass; L; I])
 % Create Jacobian functions for Kalman filter
 matlabFunction(j_a,"File","3DoF/SymXJacobian3DoF","Vars",[x; u; mass; L; I]);
 matlabFunction(j_b,"File","3DoF/SymUJacobian3DoF","Vars",[x; u; mass; L; I]);
+
+matlabFunctionBlock("JacobianX_3DoF/SymXJacobian3DoF",j_a,"Vars",[x; u; mass; L; I]);
