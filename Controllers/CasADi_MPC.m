@@ -120,7 +120,7 @@ classdef CasADi_MPC < matlab.System
 
             % Setup parametrized initial condition
             obj.p = obj.opti.parameter(1, 6);
-            obj.opti.set_value(obj.p, [obj.x_initial(1), obj.x_initial(2), obj.x_initial(3), obj.x_initial(4), obj.x_initial(5), obj.x_initial(6)]);
+            obj.opti.set_value(obj.p, obj.x_initial);
             obj.opti.subject_to(obj.x(1, :) == obj.p); % Initial state
 
             % Initial guess 
