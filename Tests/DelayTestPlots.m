@@ -12,7 +12,7 @@
 test_file_name = "Tests/DelayModel.mldatx";
 % Choose to load test results from a file or rerun the test
 load_results = true;
-result_file_name = "Tests/delaytestresults.mldatx"; 
+result_file_name = "Tests/delaytestresults_t0.1.mldatx"; 
 result_signals = ["error", "x"]; % NOTE: Don't need these but just showing how to get them as an example
 
 % Read data from results file or run the tests and read

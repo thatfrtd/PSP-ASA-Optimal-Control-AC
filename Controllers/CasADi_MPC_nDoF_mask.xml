@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Mask SelfModifiable="on">
+  <Type>CasADi_MPC_nDoF</Type>
+  <SourceCheckSum>46D12EAC7D975070D23B82E1B24498E4</SourceCheckSum>
+  <Display IconOpaque="transparent" RunInitForIconRedraw="off">image(&apos;CasADi.png&apos;);
+
+disp(&apos;CasADi_MPC_nDoF&apos;);
+port_label(&apos;input&apos;,1,&apos;x_current&apos;);
+port_label(&apos;input&apos;,2,&apos;x_final&apos;);
+port_label(&apos;output&apos;,1,&apos;x_opt&apos;);
+port_label(&apos;output&apos;,2,&apos;u_opt&apos;);
+port_label(&apos;output&apos;,3,&apos;t_opt&apos;);
+</Display>
+  <Description>Support name-value pair arguments when constructing object</Description>
+  <Initialization>matlab.system.MLSysBlockIconAndPortLabelsInfo.updateMLSysBlockIconAndPortLabels(gcbh)</Initialization>
+  <MaskParameter Name="vehicle" Type="edit" Tunable="off">
+    <Prompt>vehicle:</Prompt>
+    <Value>vehicle</Value>
+  </MaskParameter>
+  <MaskParameter Name="dof" Type="edit" Tunable="off" NeverSave="on" ReadOnly="on" Enabled="off">
+    <Prompt>dof:</Prompt>
+    <Value>dof</Value>
+  </MaskParameter>
+  <MaskParameter Name="t_step" Type="edit" Tunable="off">
+    <Prompt>t_step:</Prompt>
+    <Value>dtime</Value>
+  </MaskParameter>
+  <MaskParameter Name="steps" Type="edit" Tunable="off">
+    <Prompt>steps:</Prompt>
+    <Value>steps</Value>
+  </MaskParameter>
+  <MaskParameter Name="max_iter" Type="edit" Tunable="off">
+    <Prompt>max_iter:</Prompt>
+    <Value>max_iter</Value>
+  </MaskParameter>
+  <MaskParameter Name="x_initial" Type="edit" Tunable="off">
+    <Prompt>x_initial:</Prompt>
+    <Value>x0</Value>
+  </MaskParameter>
+  <MaskParameter Name="x_final" Type="edit" Tunable="off">
+    <Prompt>x_final:</Prompt>
+    <Value>xf</Value>
+  </MaskParameter>
+  <MaskParameter Name="cost_x" Type="edit" Tunable="off">
+    <Prompt>cost_x:</Prompt>
+    <Value>[0, 0, 0, 0, 0, 1]</Value>
+  </MaskParameter>
+  <MaskParameter Name="cost_u" Type="edit" Tunable="off">
+    <Prompt>cost_u:</Prompt>
+    <Value>[1, 1]</Value>
+  </MaskParameter>
+  <MaskParameter Name="SimulateUsing" Type="popup" Evaluate="off" Tunable="off">
+    <Prompt>SystemBlock:MATLABSystem:SimulateUsing</Prompt>
+    <Value>Interpreted execution</Value>
+    <TypeOptions>
+      <Option>SystemBlock:MATLABSystem:SimulateUsingCodeGeneration</Option>
+      <Option>SystemBlock:MATLABSystem:SimulateUsingInterpretedExecution</Option>
+    </TypeOptions>
+  </MaskParameter>
+  <DialogControl Type="Group" Name="DescGroupVar">
+    <Prompt>CasADi_MPC_nDoF</Prompt>
+    <DialogControl Type="Text" Name="DescTextVar">
+      <Prompt>%&lt;MaskDescription&gt;</Prompt>
+    </DialogControl>
+    <DialogControl Type="Hyperlink" Name="SourceCodeLink">
+      <Prompt>Source code</Prompt>
+      <Callback>edit(&apos;CasADi_MPC_nDoF&apos;);</Callback>
+    </DialogControl>
+  </DialogControl>
+  <DialogControl Type="Group" Name="SectionGroup0_Section1">
+    <Prompt>Simulink:studio:ToolBarParametersMenu</Prompt>
+    <ControlOptions AlignPrompts="on"/>
+    <DialogControl Type="Edit" Name="vehicle">
+      <Prompt>vehicle:</Prompt>
+      <ControlOptions PromptLocation="left"/>
+    </DialogControl>
+    <DialogControl Type="Edit" Name="dof">
+      <Prompt>dof:</Prompt>
+      <ControlOptions PromptLocation="left"/>
+    </DialogControl>
+    <DialogControl Type="Edit" Name="t_step">
+      <Prompt>t_step:</Prompt>
+      <ControlOptions PromptLocation="left"/>
+    </DialogControl>
+    <DialogControl Type="Edit" Name="steps">
+      <Prompt>steps:</Prompt>
+      <ControlOptions PromptLocation="left"/>
+    </DialogControl>
+    <DialogControl Type="Edit" Name="max_iter">
+      <Prompt>max_iter:</Prompt>
+      <ControlOptions PromptLocation="left"/>
+    </DialogControl>
+    <DialogControl Type="Edit" Name="x_initial">
+      <Prompt>x_initial:</Prompt>
+      <ControlOptions PromptLocation="left"/>
+    </DialogControl>
+    <DialogControl Type="Edit" Name="x_final">
+      <Prompt>x_final:</Prompt>
+      <ControlOptions PromptLocation="left"/>
+    </DialogControl>
+    <DialogControl Type="Edit" Name="cost_x">
+      <Prompt>cost_x:</Prompt>
+      <ControlOptions PromptLocation="left"/>
+    </DialogControl>
+    <DialogControl Type="Edit" Name="cost_u">
+      <Prompt>cost_u:</Prompt>
+      <ControlOptions PromptLocation="left"/>
+    </DialogControl>
+  </DialogControl>
+  <DialogControl Type="Panel" Name="SectionGroup0_Section2">
+    <ControlOptions AlignPrompts="on"/>
+    <DialogControl Type="Popup" Name="SimulateUsing">
+      <Prompt>Simulate using:</Prompt>
+      <Tooltip>SystemBlock:MATLABSystem:SimulateUsingDescription</Tooltip>
+      <ControlOptions PromptLocation="left"/>
+    </DialogControl>
+  </DialogControl>
+</Mask>
