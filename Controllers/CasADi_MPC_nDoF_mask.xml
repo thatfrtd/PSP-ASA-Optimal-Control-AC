@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Mask SelfModifiable="on">
   <Type>CasADi_MPC_nDoF</Type>
-  <SourceCheckSum>6FA2CE9B30FF2EDEB6074FF3D64AF9E1</SourceCheckSum>
-  <Display IconOpaque="transparent" RunInitForIconRedraw="off">disp(&apos;CasADi_MPC_nDoF&apos;);
+  <SourceCheckSum>46D12EAC7D975070D23B82E1B24498E4</SourceCheckSum>
+  <Display IconOpaque="transparent" RunInitForIconRedraw="off">image(&apos;CasADi.png&apos;);
+
+disp(&apos;CasADi_MPC_nDoF&apos;);
 port_label(&apos;input&apos;,1,&apos;x_current&apos;);
 port_label(&apos;input&apos;,2,&apos;x_final&apos;);
 port_label(&apos;output&apos;,1,&apos;x_opt&apos;);

@@ -2,7 +2,7 @@ classdef CasADi_MPC_nDoF < matlab.System
     properties (Nontunable)
         vehicle = Vehicle(100000,30,60,deg2rad(20),800000,2000000, Name = "Default")
 
-        dof (1, 1) {mustBeA(dof, "DoF")} = DoF.planar3DoF
+        dof (1, 1)% {mustBeA(dof, "DoF")}
 
         t_step (1, 1) double = 0.01
         steps (1, 1) double = 400
@@ -87,7 +87,7 @@ classdef CasADi_MPC_nDoF < matlab.System
 
             obj.xf = obj.opti.parameter(1, obj.dof.nx);
             obj.opti.set_value(obj.xf, obj.x_final);
-            obj.opti.subject_to(obj.x(obj.steps, :) == obj.xf); % Final state
+            obj.opti.subject_to(obj.x(obj.steps, 3) == obj.xf(3)); % Final state
 
             path_cost_x = sum(obj.cost_x' .* sum(obj.x.^2, 1));
             path_cost_u = sum(obj.cost_u' .* sum(obj.u.^2, 1));
@@ -102,7 +102,7 @@ classdef CasADi_MPC_nDoF < matlab.System
                 u_current = obj.u(i, :)';
                 
                 % Define the state derivatives
-                x_dot = Dynamics3DoF(x_current, u_current, obj.vehicle);
+                x_dot = Dynamics_nDoF(x_current, u_current, obj.vehicle, obj.dof);
                 
                 % Euler integration for dynamics constraints
                 x_next = x_current + x_dot * obj.t_step;
@@ -135,8 +135,7 @@ classdef CasADi_MPC_nDoF < matlab.System
             obj.opti.subject_to(obj.x(1, :) == obj.p); % Initial state
 
             % Initial guess 
-            %[x_guess, u_guess] = guess_nDoF(obj.x_initial', obj.x_final', obj.steps, obj.t_step, obj.vehicle, obj.dof);
-            [x_guess, u_guess] = guess_3DoF(obj.x_initial', obj.x_final', obj.steps, obj.t_step, obj.vehicle);
+            [x_guess, u_guess] = guess_nDoF(obj.x_initial', obj.x_final', obj.steps, obj.t_step, obj.vehicle, obj.dof);
 
             obj.opti.set_initial(obj.x, x_guess);
             obj.opti.set_initial(obj.u, u_guess);

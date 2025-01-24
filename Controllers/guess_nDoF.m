@@ -6,7 +6,7 @@ g = 9.81; % [m/s2]
 
 % Control guess
 T_guess = 0.4; % [N] Initial thrust guess
-u_guess = [T_guess, zeros([dof.nu - 1, 1])] .* ones([steps, dof.nu]);
+u_guess = [T_guess, zeros([1, dof.nu - 1])] .* ones([steps, dof.nu]);
 
 % Parameter guess
 v_0 = x_0(dof.iv);
@@ -30,7 +30,7 @@ x_guess(:, dof.itheta) = straight_line_interpolate(x_0(dof.itheta), x_f(dof.ithe
 % ω_guess
 w_cst = (x_0(dof.itheta) - x_f(dof.itheta)) / (steps * t_step);
 
-x_guess(:, dof.iw) = w_cst;
+x_guess(:, dof.iw) = repmat(w_cst(1:numel(dof.iw)), steps, 1);
 
 end
 
