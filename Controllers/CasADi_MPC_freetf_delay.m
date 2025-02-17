@@ -99,11 +99,18 @@ classdef CasADi_MPC_freetf_delay < matlab.System
             obj.opti.minimize(cost);
 
             %constraints
+            thrust_max = 0.05;
+            gimbal_max = pi/90;
             for i = 1:(obj.steps-1)
                 % Current state
                 x_current = obj.x(i, :)';
                 u_current = obj.u(i, :)';
                 
+                % Impose thrust limits
+                 obj.opti.subject_to(((obj.u(i+1, 1) - obj.u(i, 1))/(obj.tf/obj.steps)) < thrust_max);
+                % %impose gimbal limits
+                 obj.opti.subject_to(((obj.u(i+1, 2) - obj.u(i, 2))/(obj.tf/obj.steps)) < gimbal_max);
+
                 % Define the state derivatives
                 x_dot = Dynamics3DoF(x_current, u_current, obj.vehicle);
                 
